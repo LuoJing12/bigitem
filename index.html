@@ -57,6 +57,66 @@
         top: 4px;
         margin-right: 10px;
       }
+      /* 设置卡片主体区域的宽度 */
+.layui-card-body {
+    width: 500px;
+}
+
+/* 设置按钮行的样式 */
+.row2 {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+/* 设置裁剪区域的样式 */
+.cropper-box {
+    width: 350px;
+    height: 350px;
+    background-color: cyan;
+    overflow: hidden;
+}
+
+/* 设置第一个预览区域的样式 */
+.w100 {
+    width: 100px;
+    height: 100px;
+    background-color: gray;
+}
+
+/* 设置第二个预览区域的样式 */
+.w50 {
+    width: 50px;
+    height: 50px;
+    background-color: gray;
+    margin-top: 50px;
+}
+
+/* 设置预览区域下方文本的样式 */
+.size {
+    font-size: 12px;
+    color: gray;
+    text-align: center;
+}
+
+/* 设置图片行的样式 */
+.row1 {
+    display: flex;
+}
+
+/* 设置 preview-box 区域的的样式 */
+.preview-box {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    align-items: center;
+}
+
+/* 设置 img-preview 区域的样式 */
+.img-preview {
+    overflow: hidden;
+    border-radius: 50%;
+}
     </style>
   </head>
   <body>
@@ -79,9 +139,9 @@
               个人中心
             </a>
             <dl class="layui-nav-child">
-              <dd><a href="">基本资料</a></dd>
-              <dd><a href="">更换头像</a></dd>
-              <dd><a href="">重置密码</a></dd>
+              <dd><a href="./user/user_info.html" target="fm">基本资料</a></dd>
+              <dd><a href="./user/user_avatar.html" target="fm">更换头像</a></dd>
+              <dd><a href="./user/user_pwd.html" target="fm">重置密码</a></dd>
             </dl>
           </li>
           <!-- 退出按钮 -->
@@ -147,7 +207,7 @@
                   >
                 </dd>
                 <dd>
-                  <a href="javascript:;"
+                  <a href="./user/user_avatar.html " target="fm"
                     ><i class="layui-icon layui-icon-app"></i>更换头像</a
                   >
                 </dd>
@@ -167,7 +227,7 @@
         <!-- <div style="padding: 15px">
           内容主体区域。记得修改 layui.css 和 js 的路径
         </div> -->
-        <iframe name="fm" src="./user/user_pwd.html" frameborder="0"></iframe>
+        <iframe name="fm" src="./user/user_avatar.html" frameborder="0"></iframe>
         <!-- <iframe name="fm" src="./home/dashboard.html" frameborder="0"></iframe> -->
 
         <!-- <iframe name="fm" src="./home/dashboard.html" frameborder="0"></iframe> -->
@@ -213,7 +273,7 @@
            return layer.msg("获取用户信息失败");
           }
         //   renderAvatar(res.data);
-        console.log(res.data);
+        // console.log(res.data);
         renderAvatar(res.data)
         },
         
