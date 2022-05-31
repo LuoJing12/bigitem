@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="../assets/lib/layui/css/layui.css" />
+    <link rel="stylesheet" href="../assets/css/user/user_info.css" />
+  </head>
+  <style>
+    .layui-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+  <body>
+    <div class="layui-card">
+      <div class="layui-card-header">
+        <span>文章类别</span>
+        <button type="button" class="layui-btn" id="btnAddCate">添加</button>
+      </div>
+      <div class="layui-card-body">
+        <form class="layui-form" id="form-search">
+          <div class="layui-form-item layui-inline">
+            <select name="cate_id"></select>
+          </div>
+          <div class="layui-form-item layui-inline">
+            <select name="state">
+              <option value="">所有状态</option>
+              <option value="已发布">已发布</option>
+              <option value="草稿">草稿</option>
+            </select>
+          </div>
+          <div class="layui-form-item layui-inline">
+            <button class="layui-btn" lay-submit lay-filter="formDemo">
+              筛选
+            </button>
+          </div>
+        </form>
+        <table class="layui-table">
+          <colgroup>
+            <col width="200" />
+            <col />
+            <col />
+            <col />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>文章标题</th>
+              <th>分类</th>
+              <th>发表时间</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- <tr>
+              <td>贤心</td>
+              <td>2016-11-29</td>
+              <td>
+                <button type="button" class="layui-btn layui-btn-xs">
+                  编辑
+                </button>
+                <button
+                  type="button"
+                  class="layui-btn layui-btn-danger layui-btn-xs"
+                >
+                  删除
+                </button>
+              </td>
+            </tr> -->
+          </tbody>
+        </table>
+      </div>
+      <div id="pagebox"></div>
+    </div>
+  </body>
+  <script src="../assets/lib/layui/layui.all.js"></script>
+  <script src="../assets/lib/jquery.js"></script>
+  <script src="../assets/js/base.js"></script>
+  <script src="../assets/lib/template-web.js"></script>
+  <script src="../assets/lib/moment.js"></script>
+  <script>
+    let searchListObj = {
+      pagenum: 1, // 页码值，默认请求第一页的数据
+      pagesize: 2, // 每页显示几条数据，默认每页显示2条
+      cate_id: "", // 文章分类的 Id
+      state: "", // 文章的发布状态
+    };
+    let form = layui.form;
+    let laypage = layui.laypage;
+    initTable();
+    function initTable() {
+      $.ajax({
+        method: "GET",
+        url: "/my/article/list",
+        data: searchListObj,
+        success: function (res) {
+          if (res.status !== 0) {
+            return layer.msg("获取文章列表失败！");
+          }
+          // 2.1 使用模板引擎渲染页面的数据
+          let htmlStr = template("temp-table", res);
+          $("tbody").html(htmlStr);
+          renderPage(res.total);
+        },
+      });
+    }
+    //
+    initCate();
+    function initCate() {
+      $.ajax({
+        method: "GET",
+        url: "/my/article/cates",
+        success: function (res) {
+          if (res.status !== 0) {
+            return layer.msg("获取文章列表失败！");
+          }
+          // 2.1 使用模板引擎渲染页面的数据
+          let htmlStr = template("temp-cate", res);
+          $("[name=cate_id]").html(htmlStr);
+          form.render();
+        },
+      });
+    }
+
+    //实行筛选功能
+    $("#form-search").on("submit", function (e) {
+      // 4.1 取消默认提交事件
+      e.preventDefault();
+      // 4.2 获取表单中选中项的值
+      let cate_id = $("[name=cate_id]").val();
+      let state = $("[name=state]").val();
+      // 4.3 为查询参数对象 searchListObj 中对应的属性赋值
+      searchListObj.cate_id = cate_id;
+      searchListObj.state = state;
+      // 4.4 根据最新的筛选条件，重新渲染表格的数据
+      initTable();
+    });
+
+    //分页功能
+    function renderPage(total) {
+      laypage.render({
+        elem: "pagebox", //注意，这里的 test1 是 ID，不用加 # 号
+        count: total, //数据总数，从服务端得到
+        limit: searchListObj.pagesize,
+        curr: searchListObj.pagenum,
+        layout: ["count", "prev", "page", "next", "limit", "skip"],
+        limits: [2, 4, 6, 8],
+        jump: function (obj, first) {
+          //obj包含了当前分页的所有参数，比如：
+          // console.log(obj.curr); //得到当前页，以便向服务端请求对应页的数据。
+          // console.log(obj.limit); //得到每页显示的条数
+          // console.log(first);
+          searchListObj.pagenum = obj.curr;
+          searchListObj.pagesize = obj.limit;
+          //首次不执行,只有操作组件中的按钮时才执行
+          if (!first) {
+            initTable();
+          }
+        },
+      });
+    }
+
+    //分页中的删除功能
+    $("body").on("click", ".btn-del", function (e) {
+      e.preventDefault();
+      let len = $(".btn-del").length;
+      let id = $(this).attr("data-id");
+      layer.confirm("确定删除?", function (index) {
+        $.ajax({
+          method: "GET",
+          url: "/my/article/delete/" + id,
+          success: function (res) {
+            if (res.status !== 0) {
+              return layer.msg(res.message || "删除失败");
+            } else {
+              // 删之前页面只有一条元素
+              if (len === 1) {
+                searchListObj.pagenum =
+                  searchListObj.pagenum === 1 ? 1 : searchListObj.pagenum - 1;
+              }
+              layer.msg(res.message || "删除成功");
+              layer.close(index);
+              //添加成功,渲染
+              initTable();
+            }
+          },
+        });
+      });
+    });
+    template.defaults.imports.dataFormat = function (date) {
+      return moment(date).format("YYYY-MM-DD:hh:mm:ss");
+    };
+  </script>
+  <script type="text/html" id="temp-table">
+    {{each data}}
+    <tr>
+      <td>{{$value.title}}</td>
+      <td>{{$value.cate_name}}</td>
+      <td>{{$value.pub_date|dataFormat}}</td>
+      <td>{{$value.state}}</td>
+      <td>
+        <button
+          type="button"
+          class="layui-btn layui-btn-danger layui-btn-xs btn-del"
+          data-id="{{$value.Id}}"
+        >
+          删除
+        </button>
+      </td>
+    </tr>
+    {{/each}}
+  </script>
+  <script type="text/html" id="temp-cate">
+    {{each data}}
+    <option value="{{$value.Id}}">{{$value.name}}</option>
+    {{/each}}
+  </script>
+</html>

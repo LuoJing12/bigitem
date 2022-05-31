@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="../assets/lib/layui/css/layui.css" />
+    <link rel="stylesheet" href="../assets/lib/cropper/cropper.css" />
+  </head>
+  <style>
+    /* 封面容器的样式 */
+    .cover-box {
+      display: flex;
+    }
+
+    /* 左侧裁剪区域的样式 */
+    .cover-left {
+      width: 400px;
+      height: 280px;
+      overflow: hidden;
+      margin-right: 20px;
+    }
+
+    /* 右侧盒子的样式 */
+    .cover-right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* 预览区域的样式 */
+    .img-preview {
+      width: 200px;
+      height: 140px;
+      background-color: #ccc;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+  </style>
+  <body>
+    <div class="layui-card">
+      <div class="layui-card-header">
+        <span>文章类别</span>
+      </div>
+      <div class="layui-card-body">
+        <form class="layui-form" id="form-pub">
+          <!-- 第一行 文章标题 -->
+          <div class="layui-form-item">
+            <label class="layui-form-label">文章标题</label>
+            <div class="layui-input-block">
+              <input
+                type="text"
+                name="title"
+                required
+                lay-verify="required"
+                placeholder="请输入标题"
+                autocomplete="off"
+                class="layui-input"
+              />
+            </div>
+          </div>
+          <div class="layui-form-item layui-inline">
+            <select name="cate_id"></select>
+          </div>
+          <div class="layui-form-item layui-inline">
+            <button class="layui-btn" lay-submit lay-filter="formDemo">
+              确定
+            </button>
+          </div>
+          <div class="layui-form-item">
+            <!-- 左侧的 label -->
+            <label class="layui-form-label">文章内容</label>
+            <!-- 为富文本编辑器外部的容器设置高度 -->
+            <div class="layui-input-block" style="height: 400px">
+              <!-- 重要：将来这个 textarea 会被初始化为富文本编辑器 -->
+              <textarea name="content"></textarea>
+            </div>
+          </div>
+          <div class="layui-form-item">
+            <!-- 左侧的 label -->
+            <label class="layui-form-label">文章封面</label>
+            <!-- 选择封面区域 -->
+            <div class="layui-input-block cover-box">
+              <!-- 左侧裁剪区域 -->
+              <div class="cover-left">
+                <img id="image" src="/assets/images/sample2.jpg" alt="" />
+              </div>
+              <!-- 右侧预览区域和选择封面区域 -->
+              <div class="cover-right">
+                <!-- 预览的区域 -->
+                <div class="img-preview"></div>
+                <!-- 选择封面按钮 -->
+                <button
+                  type="button"
+                  class="layui-btn layui-btn-danger"
+                  id="btnChooseImage"
+                >
+                  选择封面
+                </button>
+                <!-- 隐藏的文件选择框 -->
+                <input
+                  type="file"
+                  id="coverFile"
+                  style="display: none"
+                  accept="image/png,image/jpeg,image/gif"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="layui-form-item">
+            <div class="layui-input-block">
+              <button class="layui-btn" lay-submit>发布</button>
+              <button
+                class="layui-btn layui-btn-primary"
+                lay-submit
+                id="btnSave2"
+              >
+                存为草稿
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div id="pagebox"></div>
+    </div>
+  </body>
+  <script src="../assets/lib/layui/layui.all.js"></script>
+  <script src="../assets/lib/jquery.js"></script>
+  <script src="../assets/lib/cropper/Cropper.js"></script>
+  <script src="../assets/lib/cropper/jquery-cropper.js"></script>
+  <script src="../assets/js/base.js"></script>
+  <script src="../assets/lib/template-web.js"></script>
+  <script src="../assets/lib/moment.js"></script>
+  <script src="../assets/lib/tinymce/tinymce.min.js"></script>
+  <script src="../assets/lib/tinymce/tinymce_setup.js"></script>
+  <script>
+    initEditor();
+    let form = layui.form;
+    // 1. 初始化图片裁剪器
+    var $image = $("#image");
+    // 2. 裁剪选项
+    var options = {
+      aspectRatio: 400 / 280,
+      preview: ".img-preview",
+    };
+    // 3. 初始化裁剪区域
+    $image.cropper(options);
+
+    //上传头像功能
+    $("#coverFile").change(function (e) {
+      //1.1获取图片上传按钮上的图片数组
+      let fileList = e.target.files;
+      // 1.2数组长度为0,阻止后续逻辑执行
+      if (fileList.length <= 0) {
+        return layer.msg("请选择图片");
+      }
+      // 1.3拿到索引为0的图片
+      let file = fileList[0];
+      // 如果说，面试问到如何优化签订的代码，提高代码执行效率
+      // 1. 如果有多个地方都用到同一个对象下的某一个属性时，可以在公共作用域中将这个属性提取成一个变量，在这些都需要使用的地方都去访问这个变量即可
+      let imgUrl = URL.createObjectURL(file);
+      console.log(imgUrl);
+      // 3.4 重新初始化裁剪区域
+      $image
+        .cropper("destroy") // 销毁旧的裁剪区域
+        .attr("src", imgUrl) // 重新设置图片路径
+        .cropper(options); // 重新初始化裁剪区域
+    });
+    $("#btnChooseImage").click(function (e) {
+      e.preventDefault();
+      //模拟点击input图片提交框
+      $("#coverFile").click();
+      //通过css接口隐藏input图片提交框
+    });
+
+    initCate();
+    function initCate() {
+      $.ajax({
+        method: "GET",
+        url: "/my/article/cates",
+        success: function (res) {
+          if (res.status !== 0) {
+            return layer.msg("获取文章列表失败！");
+          }
+          // 2.1 使用模板引擎渲染页面的数据
+          let htmlStr = template("temp-cate", res);
+          $("[name=cate_id]").html(htmlStr);
+          form.render();
+        },
+      });
+    }
+
+    //发布文章
+    let art_state = "已发布";
+
+    $("#btnSave2").on("click", function () {
+      art_state = "草稿";
+    });
+    $("#form-pub").on("submit", function (e) {
+      e.preventDefault();
+      let fd = new FormData();
+      let title = $("[name=title]").val();
+      let cate_id = $("[name=cate_id]").val();
+      let content = $("[name=content]").val();
+      console.log(title, content, cate_id);
+      fd.append("title", title);
+      fd.append("cate_id", cate_id);
+      fd.append("content", content);
+      fd.append("state", art_state);
+
+      $image
+        .cropper("getCroppedCanvas", {
+          width: 400,
+          height: 280,
+        })
+        .toBlob(function (blob) {
+          //blob异步执行
+          fd.append("cover_img", blob);
+          publishArticle(fd);
+        });
+      console.log(fd);
+    });
+    //发送请求
+    function publishArticle(fd) {
+      $.ajax({
+        method: "POST",
+        url: "/my/article/add",
+        data: fd,
+        // 注意：如果向服务器提交的是 FormData 格式的数据，
+        // 必须添加以下两个配置项
+        contentType: false,
+        processData: false,
+        success: function (res) {
+          if (res.status !== 0) {
+            return layer.msg("发布文章失败！");
+          }
+          layer.msg("发布文章成功！");
+        },
+      });
+      // location.href = "/article/art_list.html";
+    }
+  </script>
+
+  <script type="text/html" id="temp-cate">
+    <option value="">请选择文章类别</option>
+    {{each data}}
+    <option value="{{$value.Id}}">{{$value.name}}</option>
+    {{/each}}
+  </script>
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="../assets/lib/layui/css/layui.css" />
+    <link rel="stylesheet" href="../assets/css/user/user_info.css" />
+  </head>
+  <style>
+    .layui-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+  <body>
+    <div class="layui-card">
+      <div class="layui-card-header">
+        <span>文章类别</span>
+        <button type="button" class="layui-btn" id="btnAddCate">添加</button>
+      </div>
+      <div class="layui-card-body">
+        <table class="layui-table">
+          <colgroup>
+            <col />
+            <col />
+            <col width="200" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>昵称</th>
+              <th>加入时间</th>
+              <th>签名</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- <tr>
+              <td>贤心</td>
+              <td>2016-11-29</td>
+              <td>
+                <button type="button" class="layui-btn layui-btn-xs">
+                  编辑
+                </button>
+                <button
+                  type="button"
+                  class="layui-btn layui-btn-danger layui-btn-xs"
+                >
+                  删除
+                </button>
+              </td>
+            </tr> -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- <form class="layui-form" id="user_form" lay-filter="formUserInfo">
+      <div class="layui-form-item">
+        <label class="layui-form-label">分类名称</label>
+        <div class="layui-input-block">
+          <input
+            type="text"
+            name="username"
+            required
+            lay-verify="required|nickname"
+            placeholder="请输入用户昵称"
+            autocomplete="off"
+            class="layui-input"
+          />
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">名称</label>
+        <div class="layui-input-block">
+          <input
+            type="text"
+            name="nickname"
+            required
+            lay-verify="required|nickname"
+            placeholder="请输入用户昵称"
+            autocomplete="off"
+            class="layui-input"
+          />
+        </div>
+      </div>
+
+      <div class="layui-form-item">
+        <div class="layui-input-block">
+          <button
+            type="submit"
+            class="layui-btn"
+            lay-submit
+            lay-filter="formDemo"
+          >
+            提交修改
+          </button>
+          <button
+            type="reset"
+            class="layui-btn layui-btn-primary"
+            id="btnReset"
+          >
+            重置
+          </button>
+        </div>
+      </div>
+    </form> -->
+  </body>
+  <script src="../assets/lib/layui/layui.all.js"></script>
+  <script src="../assets/lib/jquery.js"></script>
+  <script src="../assets/js/base.js"></script>
+  <script src="../assets/lib/template-web.js"></script>
+  <script>
+    let layer = layui.layer;
+    let indexAdd = null;
+    let form = layui.form;
+    //业务逻辑
+    //初始化分类列表
+    initArtCateList();
+
+    function initArtCateList() {
+      $.ajax({
+        method: "GET",
+        url: "/my/article/cates",
+        success: function (res) {
+          // console.log(res);
+          if (res.status !== 0) {
+            layer.msg(res.message || "获取失败");
+          } else {
+            let htmlStr = template("tel-table", res);
+            $("tbody").html(htmlStr);
+          }
+        },
+      });
+    }
+    //监听btnAddCate按钮,设置弹框
+    $("#btnAddCate").on("click", function () {
+      indexAdd = layer.open({
+        type: 1,
+        area: ["500px", "250px"], // 设置框框大小
+        title: "添加文章分类", // 弹框标题
+        content: $("#telAddCate").html(), // 弹框内容
+      });
+    });
+
+    //通过事件委托,监听submit按钮
+    $("body").on("submit", "#form-add", function (event) {
+      event.preventDefault();
+      let data = {
+        name: $("#form-add [name=name]").val(),
+        alias: $("#form-add [name=alias]").val(),
+      };
+      $.ajax({
+        method: "POST",
+        url: "/my/article/addcates",
+        data: data,
+        success: function (res) {
+          if (res.status !== 0) {
+            return layer.msg(res.message || "添加失败");
+          } else {
+            layer.msg(res.message || "添加成功");
+            layer.close(indexAdd);
+            //添加成功,渲染
+            initArtCateList();
+          }
+        },
+      });
+    });
+
+    //通过事件委托添加编辑功能
+    let indexEdit = null;
+    $("tbody").on("click", "#btn-edit", function (event) {
+      event.preventDefault();
+      indexEdit = layer.open({
+        type: 1,
+        area: ["500px", "250px"], // 设置框框大小
+        title: "添加文章分类", // 弹框标题
+        content: $("#dialog-edit").html(), // 弹框内容
+      });
+      // let id = $(this).attr("data-id");
+      // $.ajax({
+      //   method: "GET",
+      //   url: "/my/article/cates/" + id,
+      //   success: function (res) {
+      //     if (res.status !== 0) {
+      //       return;
+      //     } else {
+      //       form.val("formEditInfo", res.data);
+      //     }
+      //   },
+      // });
+      let data = {
+        id: $(this).attr("data-id"),
+        name: $(this).attr("data-name"),
+        alias: $(this).attr("data-alias"),
+      };
+      form.val("formEditInfo", data);
+    });
+
+    //编辑分类功能
+    $("body").on("submit", "#form-edit", function (event) {
+      event.preventDefault();
+      let data = {
+        Id: $("#form-edit [name=Id]").val(),
+        name: $("#form-edit [name=name]").val(),
+        alias: $("#form-edit [name=alias]").val(),
+      };
+      $.ajax({
+        method: "POST",
+        url: "/my/article/updatecate",
+        data: data,
+        success: function (res) {
+          if (res.status !== 0) {
+            return layer.msg(res.message || "更新分类数据失败");
+          } else {
+            layer.msg(res.message || "更新分类数据成功");
+            layer.close(indexEdit);
+            //添加成功,渲染
+            initArtCateList();
+          }
+        },
+      });
+    });
+
+    //删除功能
+
+    $("body").on("click", "#del-btn", function (e) {
+      e.preventDefault();
+      let id = $(this).attr("data-id");
+      layer.confirm("确定删除?", function (index) {
+        $.ajax({
+          method: "GET",
+          url: "/my/article/deletecate/" + id,
+          success: function (res) {
+            if (res.status !== 0) {
+              return layer.msg(res.message || "删除失败");
+            } else {
+              layer.msg(res.message || "删除成功");
+              layer.close(index);
+              //添加成功,渲染
+              initArtCateList();
+            }
+          },
+        });
+      });
+    });
+  </script>
+
+  <!-- 表格数据的模板 -->
+  <script type="text/html" id="tel-table">
+    {{each data}}
+    <tr>
+      <td>{{$value.name}}</td>
+      <td>{{$value.alias}}</td>
+      <td>
+        <button
+          type="button"
+          class="layui-btn layui-btn-xs"
+          id="btn-edit"
+          data-id="{{$value.Id}}"
+          data-name="{{$value.name}}"
+          data-alias="{{$value.alias}}"
+        >
+          编辑
+        </button>
+        <button
+          id="del-btn"
+          type="button"
+          class="layui-btn layui-btn-danger layui-btn-xs"
+          data-id="{{$value.Id}}"
+        >
+          删除
+        </button>
+      </td>
+    </tr>
+    {{/each}}
+  </script>
+  <!-- 添加分类的模板 -->
+  <script type="text/html" id="telAddCate">
+    <div style="padding-top: 12px;">
+      <form class="layui-form" id="form-add" lay-filter="formUserInfo">
+        <div class="layui-form-item">
+          <label class="layui-form-label">分类名称</label>
+          <div class="layui-input-block">
+            <input
+              type="text"
+              name="name"
+              required
+              lay-verify="required"
+              placeholder="请输入用户昵称"
+              autocomplete="off"
+              class="layui-input"
+            />
+          </div>
+        </div>
+        <div class="layui-form-item">
+          <label class="layui-form-label">名称</label>
+          <div class="layui-input-block">
+            <input
+              type="text"
+              name="alias"
+              required
+              lay-verify="required"
+              placeholder="请输入用户昵称"
+              autocomplete="off"
+              class="layui-input"
+            />
+          </div>
+        </div>
+
+        <div class="layui-form-item">
+          <div class="layui-input-block">
+            <button
+              type="submit"
+              class="layui-btn"
+              lay-submit
+              lay-filter="formDemo"
+            >
+              提交修改
+            </button>
+            <button
+              type="reset"
+              class="layui-btn layui-btn-primary"
+              id="btnReset"
+            >
+              重置
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </script>
+  <!-- 添加编辑的模板 -->
+  <script type="text/html" id="dialog-edit">
+    <div style="padding-top: 12px;">
+      <form class="layui-form" id="form-edit" lay-filter="formEditInfo">
+        <div class="layui-form-item" style="display: none">
+          <label class="layui-form-label">id</label>
+          <div class="layui-input-block">
+            <input
+              type="text"
+              name="Id"
+              placeholder="请输入用户昵称"
+              autocomplete="off"
+              class="layui-input"
+            />
+          </div>
+        </div>
+        <div class="layui-form-item">
+          <label class="layui-form-label">分类名称</label>
+          <div class="layui-input-block">
+            <input
+              type="text"
+              name="name"
+              required
+              lay-verify="required"
+              placeholder="请输入用户昵称"
+              autocomplete="off"
+              class="layui-input"
+            />
+          </div>
+        </div>
+        <div class="layui-form-item">
+          <label class="layui-form-label">名称</label>
+          <div class="layui-input-block">
+            <input
+              type="text"
+              name="alias"
+              required
+              lay-verify="required"
+              placeholder="请输入用户昵称"
+              autocomplete="off"
+              class="layui-input"
+            />
+          </div>
+        </div>
+
+        <div class="layui-form-item">
+          <div class="layui-input-block">
+            <button
+              type="submit"
+              class="layui-btn"
+              lay-submit
+              lay-filter="formDemo"
+            >
+              提交修改
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </script>
+</html>
